@@ -12,6 +12,8 @@
 #include "musicxml/xml.h"
 #include "musicxml/xmlfile.h"
 
+#include <random>
+
 using namespace MusicXML2;
 using namespace std;
 
@@ -21,11 +23,7 @@ using namespace std;
 // a function that return random numbers in the given range
 //------------------------------------------------------------------------
 int getrandom(int range) {
-#ifdef WIN32
 	float f = (float)rand() / RAND_MAX;
-#else
-	float f = (float)random() / RAND_MAX;
-#endif
 	return (int)(f * range);
 }
 

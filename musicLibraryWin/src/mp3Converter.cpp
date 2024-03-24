@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
+#include <iostream>
 #include <mpg123.h>
 
-int decodeMp3(std::string filename, std::string outString)
-{
+int decodeMp3(std::string filename, std::string outString) {
     mpg123_handle* mh;
     //unsigned char *buffer;
     unsigned char* buffer;
@@ -22,9 +22,11 @@ int decodeMp3(std::string filename, std::string outString)
     /* open the file and get the decoding format */
     mpg123_open(mh, filename.c_str());
     mpg123_getformat(mh, &rate, &channels, &encoding);
+    std::cerr << "channels: " << channels << std::endl;
 
     /* set the output format and open the output device */
-    int m_bits = mpg123_encsize(encoding);
+    int m_bits = mpg123_encsize(encoding) * 8;
+    std::cerr << "bits: " << m_bits << std::endl;
     int m_rate = rate;
     int m_channels = channels;
     std::ofstream out(outString.c_str(), std::ios::binary);
