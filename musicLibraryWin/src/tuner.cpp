@@ -29,6 +29,7 @@ double calculateCurrentRMS(double* input, size_t inputSize) {
     return sqrt(sum / inputSize);
 }
 
+/*
 void Find_n_Largest(long long* output, long long* input, size_t n_out, size_t n_in, bool ignore_clumped) {
     long long min_pos = 0;
 
@@ -53,7 +54,7 @@ void Find_n_Largest(long long* output, long long* input, size_t n_out, size_t n_
         - Delete the other clump-mate (it is the smaller of the two clump-mates) and insert input index i at output location j
         Else if input i is greater than output j and its clump-mate is to the left of j
         - Do nothing (clump already represented)
-    **/
+    ** /
     for (int i = 0; i < n_in; i++) {
         /// Check if the current input element is part of a clump of peaks
         /// i.e., check if the index of the previous input element has been added to the output
@@ -97,6 +98,7 @@ void Find_n_Largest(long long* output, long long* input, size_t n_out, size_t n_
         }
     }
 }
+*/
 
 void findMaxY(double* vData, size_t length, double* maxY, size_t* index) {
     *maxY = 0;
@@ -128,7 +130,7 @@ void majorPeak(double* input, size_t samples, double samplingFrequency, double* 
     *frequency = interpolatedX;
 }
 
-double getFrequency(double* input, size_t inputSize, int m_rate) {
+int getNoteNumber(double* input, size_t inputSize, int m_rate) {
     /*
     double* bufferCopy = new double[inputSize];
     memcpy(bufferCopy, input, inputSize);
@@ -193,10 +195,9 @@ double getFrequency(double* input, size_t inputSize, int m_rate) {
     double peak = -1.;
     majorPeak(input, inputSize, m_rate, &peak);
     int midi_num = round(12.0 * log2(peak / 440.0) + 69.0);
-    double expected_freq = pow(2.0, (midi_num - 69.0) / 12.0) * 440.0;
-    double cents = 1200 * log2(peak / expected_freq);
-    return expected_freq;
-    // Serial.println(notes[midi_num % 12] + " (" + cents + "cents)");
+    // double expected_freq = pow(2.0, (midi_num - 69.0) / 12.0) * 440.0;
+    // double cents = 1200 * log2(peak / expected_freq);
+    return midi_num;
 }
 /*
 function noteFromPitch(frequency) {

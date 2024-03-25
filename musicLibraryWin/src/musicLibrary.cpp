@@ -1,4 +1,5 @@
 #include "musicLibrary.h"
+#include "xmlBuild.h"
 #include "tuner.h"
 
 #include <fstream>
@@ -6,8 +7,8 @@
 #include <complex>
 #include <iostream>
 
-#define FFT_WINDOW 1024
-#define MIN_RMS 0.15
+#define FFT_WINDOW 8192
+#define MIN_RMS 0.3
 
 uint8_t* decodeMP3ToPCM(const char* fileName, size_t* pcmSize, int* m_bytes, int* m_rate, int* m_channels) {
     mpg123_handle* mh;
@@ -73,8 +74,8 @@ uint8_t* decodeMP3ToPCM(const char* fileName, size_t* pcmSize, int* m_bytes, int
 }
 
 double* processPCMData(uint8_t* data, size_t dataSize, int m_bytes, int m_channels, size_t* resultSize) {
-    std::cerr << "pcmSize: " << dataSize << std::endl;
-    std::cerr << m_bytes << " " << m_channels << std::endl;
+    // std::cerr << "pcmSize: " << dataSize << std::endl;
+    // std::cerr << m_bytes << " " << m_channels << std::endl;
     *resultSize = dataSize / m_bytes / m_channels;
     // std::cerr << *resultSize << std::endl;
     // bool nonZero = true;
@@ -110,17 +111,7 @@ double* processPCMData(uint8_t* data, size_t dataSize, int m_bytes, int m_channe
         // std::cerr << temp << " " << result[i] << std::endl;
         // i += (m_channels - 1); // skipping all channels except first
     }
-    std::cerr << "processPCMData completed" << std::endl;
-    return result;
-}
-
-double* processPCMDataAsDouble(uint8_t* data, size_t dataSize, int m_bytes, int m_channels, size_t* resultSize) {
-    *resultSize = dataSize / m_bytes / m_channels;
-    double* dataDouble = (double*)data;
-    double* result = new double[*resultSize];
-    for (size_t i = 0; i < *resultSize; i++) {
-        result[i] = dataDouble[i * m_channels];
-    }
+    // std::cerr << "processPCMData completed" << std::endl;
     return result;
 }
 
@@ -131,7 +122,42 @@ void printDouble(double* input, size_t inputSize) {
     std::cout << std::endl << std::endl;
 }
 
-uint8_t* makeMusic(const char* fileName, size_t tactFirst, size_t tactSecond, size_t* xmlSize) {
+bool isMeasureFull(const std::vector<std::pair<int, int>>& currentMeasure, size_t kBeats, size_t kType) {
+    int sum = 0;
+    for (auto x : currentMeasure) {
+        sum += (16 / x.second);
+    }
+    if (sum > kBeats * (16 / kType)) {
+        std::cerr << "error: measure is bigger than possible" << std::endl;
+    }
+    return sum == kBeats * (16 / kType);
+}
+
+bool updateMeasures(std::vector<std::vector<std::pair<int, int>>>& measures,
+    std::vector<std::pair<int, int>>& currentMeasure, int note, size_t kBeats, size_t kType) {
+    currentMeasure.push_back({ note, 16 });
+    if (isMeasureFull(currentMeasure, kBeats, kType)) {
+        measures.push_back(currentMeasure);
+        return true;
+    }
+    return false;
+}
+
+void printMusicInConsole(const std::vector<std::vector<std::pair<int, int>>>& measures) {
+    std::cout << "begin:\n";
+    for (auto& measure : measures) {
+        for (auto& note : measure) {
+            std::cout << getStep(note.first % 12);
+            if (getAlter(note.first % 12)) {
+                std::cout << "#";
+            }
+            std::cout << "/" << note.second << std::endl;
+        }
+    }
+    std::cout << "\n\nend" << std::endl;
+}
+
+uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xmlSize) {
     /*
     size_t num_spikes = 5;                                             /// Number of fft spikes to consider for pitch deduction
     long long SpikeLocs[100];                                             /// Array to store indices in spectrum[] of fft spikes
@@ -187,39 +213,35 @@ uint8_t* makeMusic(const char* fileName, size_t tactFirst, size_t tactSecond, si
 
     size_t fftInSize;
     double* fftIn = processPCMData(pcmData, pcmSize, m_bytes, m_channels, &fftInSize);
-    
-    // double* fftIn = processPCMDataAsDouble(pcmData, pcmSize, m_bits, m_channels, &fftInSize);
 
     delete[] pcmData;
-    std::cerr << "After processPCMData" << std::endl;
+    // std::cerr << "After processPCMData" << std::endl;
+
+    std::vector<std::vector<std::pair<int, int>>> measures;
+    std::vector<std::pair<int, int>> currentMeasure = std::vector<std::pair<int, int>>();
+
     for (size_t offset = 0; offset + FFT_WINDOW - 1 < fftInSize; offset += FFT_WINDOW) {
         double* fftOut = makeFFT(fftIn + offset, FFT_WINDOW);
-        /*
-        for (size_t i = 0; i < FFT_WINDOW; i++) {
-            if (fftOut[i] != 0.) {
-                std::cerr << (fftIn + offset)[i] << " ";
-            }
-        }
-
-        std::cerr << "\n----------------\n";
-        */
         double currentRMS = calculateCurrentRMS(fftOut, FFT_WINDOW);
         
-        // std::cout << currentRMS << std::endl;
-        if (offset % 11 == 0) {
-            // printDouble(fftOut, FFT_WINDOW);
-        }
         if (currentRMS > MIN_RMS) {
-            double frequency = getFrequency(fftOut, FFT_WINDOW, m_rate);
-            std::cout << frequency << std::endl;
+            int note = getNoteNumber(fftOut, FFT_WINDOW, m_rate);
+            std::cout << note << std::endl;
             // place note(?) in xml?
+            if (updateMeasures(measures, currentMeasure, note, kBeats, kType)) {
+                currentMeasure = std::vector<std::pair<int, int>>();
+            }
         }
         else {
-            //std::cout << -1 << std::endl;
-            // pause
+            if (updateMeasures(measures, currentMeasure, -1, kBeats, kType)) {
+                currentMeasure = std::vector<std::pair<int, int>>();
+            }
         }
         //
         delete[] fftOut;
     }
+    printMusicInConsole(measures);
+    //printMusic(getMusicByMeasures(kBeats, kType, measures));
+
     return nullptr;
 }
