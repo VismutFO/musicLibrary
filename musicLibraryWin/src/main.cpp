@@ -21,13 +21,13 @@ int main() {
 	// Sxmlelement elt = factory::instance().create(k_accent);
 	// elt->setValue(value);
 	// elt->setValue("1");
-
-
-	makeMusic("zvuk-notyi-re.mp3", 2, 16, &size);
+	makeMusic("zvuk-notyi-do-rastyanutyiy.mp3", 2, 16, &size);
+	
+	// makeMusic("zvuk-notyi-do.mp3", 2, 16, &size);
 	// std::cout << "------------------\n\n\n";
 	// cout << size << endl;
 	return 0;
-}
+} 
 
 /*
 
@@ -226,5 +226,5 @@ int main(int argc, char* argv[]) {
 	f->print(cout);
 	cout << endl;
 	return 0;
-}
-*/
+} */
+

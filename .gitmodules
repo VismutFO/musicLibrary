@@ -1,0 +1,3 @@
+[submodule "libmusicxml"]
+	path = libmusicxml
+	url = git@github.com:grame-cncm/libmusicxml.git

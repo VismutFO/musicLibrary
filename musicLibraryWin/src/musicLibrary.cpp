@@ -147,12 +147,18 @@ void printMusicInConsole(const std::vector<std::vector<std::pair<int, int>>>& me
     std::cout << "begin:\n";
     for (auto& measure : measures) {
         for (auto& note : measure) {
-            std::cout << getStep(note.first % 12);
-            if (getAlter(note.first % 12)) {
-                std::cout << "#";
+            if (note.first == -1) {
+                std::cout << "pause";
             }
-            std::cout << "/" << note.second << std::endl;
+            else {
+                std::cout << getStep(note.first % 12);
+                if (getAlter(note.first % 12)) {
+                    std::cout << "#";
+                }
+            }
+            std::cout << "/" << note.second << " ";
         }
+        std::cout << std::endl;
     }
     std::cout << "\n\nend" << std::endl;
 }
@@ -226,7 +232,7 @@ uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xm
         
         if (currentRMS > MIN_RMS) {
             int note = getNoteNumber(fftOut, FFT_WINDOW, m_rate);
-            std::cout << note << std::endl;
+            // std::cout << note << std::endl;
             // place note(?) in xml?
             if (updateMeasures(measures, currentMeasure, note, kBeats, kType)) {
                 currentMeasure = std::vector<std::pair<int, int>>();
@@ -240,8 +246,8 @@ uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xm
         //
         delete[] fftOut;
     }
-    printMusicInConsole(measures);
-    //printMusic(getMusicByMeasures(kBeats, kType, measures));
+    // printMusicInConsole(measures);
+    printMusic(getMusicByMeasures(kBeats, kType, measures));
 
     return nullptr;
 }
