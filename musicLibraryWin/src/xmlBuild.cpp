@@ -3,6 +3,7 @@
 #include <string>
 #include <stdlib.h>
 #include <vector>
+#include <fstream>
 
 #ifdef WIN32
 #include <windows.h>
@@ -53,7 +54,7 @@ Sxmlelement newElement(int type, const string& value)
 {
 	Sxmlelement elt = factory::instance().create(type);
 	// elt->setValue(value);
-	elt->setValue("1");
+	elt->setValue(value);
 	return elt;
 }
 
@@ -85,12 +86,13 @@ Sxmlelement makeAttributes(size_t kBeats, size_t kBeatType) {
 
 Sxmlelement createPitch(int midi_num) {
 	Sxmlelement pitch = factory::instance().create(k_pitch);
-	pitch->push(newElement(k_step, getStep( midi_num % 12 )));				// sets the pitch to a random value
+	std::string step = getStep(midi_num % 12);
+	pitch->push(newElement(k_step, step));
 	int alter = getAlter(midi_num % 12);
 	if (alter) {
 		pitch->push(newElementI(k_alter, alter));
 	}
-	pitch->push(newElementI(k_octave, (midi_num / 12) - 1));		// sets the octave to a random value
+	pitch->push(newElementI(k_octave, (midi_num / 12) - 1));
 	return pitch;
 }
 
@@ -214,4 +216,13 @@ void printMusic(MusicXML2::Sxmlelement score) {
 	f->set(score);
 	f->print(cout);
 	cout << endl;
+}
+
+void saveMusicToFile(MusicXML2::Sxmlelement score, const char* resultName) {
+	SXMLFile f = TXMLFile::create();
+	f->set(new TXMLDecl("1.0", "", TXMLDecl::kNo));
+	f->set(new TDocType("score-partwise"));
+	f->set(score);
+	ofstream output(resultName);
+	f->print(output);
 }

@@ -52,3 +52,5 @@ MusicXML2::Sxmlelement getMusicByMeasures(size_t kBeats, size_t kBeatType, const
 uint8_t* getBinaryContentByMusic(MusicXML2::Sxmlelement music);
 
 void printMusic(MusicXML2::Sxmlelement score);
+
+void saveMusicToFile(MusicXML2::Sxmlelement score, const char* resultName);

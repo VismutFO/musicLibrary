@@ -163,7 +163,7 @@ void printMusicInConsole(const std::vector<std::vector<std::pair<int, int>>>& me
     std::cout << "\n\nend" << std::endl;
 }
 
-uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xmlSize) {
+uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xmlSize, const char* resultName) {
     /*
     size_t num_spikes = 5;                                             /// Number of fft spikes to consider for pitch deduction
     long long SpikeLocs[100];                                             /// Array to store indices in spectrum[] of fft spikes
@@ -246,8 +246,18 @@ uint8_t* makeMusic(const char* fileName, size_t kBeats, size_t kType, size_t* xm
         //
         delete[] fftOut;
     }
+    if (!currentMeasure.empty()) {
+        while (!updateMeasures(measures, currentMeasure, -1, kBeats, kType)) {
+
+        }
+    }
     // printMusicInConsole(measures);
-    printMusic(getMusicByMeasures(kBeats, kType, measures));
+    if (resultName == nullptr) {
+        printMusic(getMusicByMeasures(kBeats, kType, measures));
+    }
+    else {
+        saveMusicToFile(getMusicByMeasures(kBeats, kType, measures), resultName);
+    }
 
     return nullptr;
 }
