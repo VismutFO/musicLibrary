@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 		sourceName = "zvuk-notyi-do.mp3";
 		resultName = "C:\\Users\\start\\source\\repos\\musicLibraryWin\\musicLibraryWin\\zvuk-notyi-do.xml";
 		kBeats = 2;
-		kBeats = 16;
+		kType = 16;
 	}
 	
 	
