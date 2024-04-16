@@ -1,126 +1,21 @@
 #include "musicLibrary.h"
 #include "xmlBuild.h"
 #include "tuner.h"
+#include "mp3Converter.h"
 
-#include <fstream>
-#include <mpg123.h>
-#include <complex>
 #include <iostream>
 
 #define FFT_WINDOW 8192
 #define MIN_RMS 0.3
 
-uint8_t* decodeMP3ToPCM(const char* fileName, size_t* pcmSize, int* m_bytes, int* m_rate, int* m_channels) {
-    mpg123_handle* mh;
-    //unsigned char *buffer;
-    uint8_t* buffer;
-    size_t buffer_size;
-    size_t done;
-    int err;
-
-    int channels, encoding;
-    long rate;
-
-    mpg123_init();
-    mh = mpg123_new(NULL, &err);
-    buffer_size = mpg123_outblock(mh);
-    buffer = new uint8_t[buffer_size];//(uint8_t*)malloc(buffer_size * sizeof(uint8_t));
-
-    /* open the file and get the decoding format */
-    mpg123_open(mh, fileName);
-    mpg123_getformat(mh, &rate, &channels, &encoding);
-
-    /* set the output format and open the output device */
-    *m_bytes = mpg123_encsize(encoding);
-    *m_rate = rate;
-    *m_channels = channels;
-    
-    // std::ofstream out(outString.c_str(), std::ios::binary);
-    uint8_t* result = (uint8_t*)malloc(buffer_size * sizeof(uint8_t));
-    size_t resultSize = buffer_size, offset = 0;
-    
-    /* decode and play */
-    for (; mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK; )
-    {
-        if (offset + done > resultSize) { // need to get more memory
-            resultSize += buffer_size; // TODO optimize
-            result = (uint8_t*)realloc(result, resultSize);
-        }
-        memcpy(result + offset, buffer, done);
-        offset += done;
-    }
-    //out << buffer[i];
-    /*
-    std::cout << "Buffer size " << buffer_size << std::endl;
-    std::cout << "Done " << done << std::endl;
-    std::cout << "err " << err << std::endl;
-    std::cout << "channels " << channels << std::endl;
-    std::cout << "encoding " << encoding << std::endl;
-    std::cout << "Rate " << rate << std::endl;
-    std::cout << "m_bits " << m_bits << std::endl;
-    std::cout << "m_rate " << m_rate << std::endl;
-    std::cout << "m_channels " << m_channels << std::endl;
-    std::cout << "The size of buffer " << sizeof(buffer) << std::endl;
-    */
-    /* clean up */
-    //free(buffer);
-    delete[] buffer;
-    mpg123_close(mh);
-    mpg123_delete(mh);
-    mpg123_exit();
-
-    *pcmSize = offset;
-    return result;
-}
-
-double* processPCMData(uint8_t* data, size_t dataSize, int m_bytes, int m_channels, size_t* resultSize) {
-    // std::cerr << "pcmSize: " << dataSize << std::endl;
-    // std::cerr << m_bytes << " " << m_channels << std::endl;
-    *resultSize = dataSize / m_bytes / m_channels;
-    // std::cerr << *resultSize << std::endl;
-    // bool nonZero = true;
-    /*
-    for (size_t i = 0; i < dataSize; i++) {
-        if (data[i] != 0) {
-            std::cerr << "NonZero at " << i << std::endl;
-        }
-    }
-    */
-    double* result = new double[*resultSize];
-    for (size_t i = 0; i < *resultSize; i++) {
-        //long long temp = 0;
-        result[i] = 0.;
-        // for (size_t j = 0; j < m_bytes; j += m_bytes) {
-        
-            switch (m_bytes) {
-            case 1:
-                result[i] = (double)(*(char*)&data[i * m_bytes * m_channels]) / 128.;
-                break;
-            case 2:
-                result[i] = (double)(*(short*)&data[i * m_bytes * m_channels]) / 32768.;
-                break;
-            case 4:
-                result[i] = (double)(*(int*)&data[i * m_bytes * m_channels]) / 2147483648.;
-                break;
-            }
-            result[i] /= 2.;
-            // temp = (temp * 256) + data[i * m_bytes * m_channels + j];
-        // }
-        
-        // result[i] = (double)temp;
-        // std::cerr << temp << " " << result[i] << std::endl;
-        // i += (m_channels - 1); // skipping all channels except first
-    }
-    // std::cerr << "processPCMData completed" << std::endl;
-    return result;
-}
-
+/*
 void printDouble(double* input, size_t inputSize) {
     for (size_t i = 0; i < inputSize; i++) {
         std::cout << input[i] << " ";
     }
     std::cout << std::endl << std::endl;
 }
+*/
 
 bool isMeasureFull(const std::vector<std::pair<int, int>>& currentMeasure, size_t kBeats, size_t kType) {
     int sum = 0;
